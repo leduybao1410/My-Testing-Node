@@ -1,0 +1,74 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test</title>
+</head>
+
+<body>
+    <h1>WebSocket Test</h1>
+    <p>Is connection established: <span id="isConnected"></span></p>
+    <div id="messages" style="padding: 20px 10px; background-color: gray;"></div>
+    <input id="messageInput" type="text" style="margin: 20px auto;" placeholder="Type a message...">
+    <button id="sendMessageButton" onclick="sendMessage()">Send Message</button>
+    <div>
+        <button id="websocketButton" onclick="startWebSocket()">Start WebSocket</button>
+        <button id="closeWebSocketButton" onclick="closeWebSocket()">Close WebSocket</button>
+        <script>
+            let socket;
+            function startWebSocket() {
+                socket = null; // Keep this line
+                // Add this line to allow reconnection
+                socket = new WebSocket(`ws://192.168.1.10:3000`);
+                socket.onopen = function () {
+                    console.log('WebSocket connection established');
+                    document.getElementById('isConnected').innerText = 'True';
+                    socket.send('Hello Server!');
+                };
+                let lastMessage = '';
+                socket.onmessage = function (event) {
+                    if (event.data !== lastMessage) {
+                        console.log('Message data:', event.data, event);
+                        const messagesDiv = document.getElementById('messages');
+                        messagesDiv.innerHTML += `<p>Message: ${event.data}</p>`;
+                        lastMessage = event.data;
+                    }
+                };
+
+                socket.onclose = function () {
+                    console.log('WebSocket connection closed');
+                    document.getElementById('isConnected').innerText = 'False';
+                };
+                socket.onerror = function (error) {
+                    console.error('WebSocket error:', error);
+                };
+            }
+            function closeWebSocket() {
+                if (socket) {
+                    socket.close();
+                    console.log('WebSocket connection closed');
+                    document.getElementById('isConnected').innerText = 'False';
+                } else {
+                    console.log('WebSocket connection is not established');
+                }
+            }
+            function sendMessage() {
+                const messageInput = document.getElementById('messageInput');
+                if (socket && messageInput.value) {
+                    console.log('Sender: ', messageInput.value);
+                    if (socket.readyState === WebSocket.OPEN) {
+                        socket.send(messageInput.value);
+                        messageInput.value = '';
+                    } else {
+                        console.error('WebSocket connection is not open');
+                    }
+                } else {
+                    console.log('WebSocket connection is not established or no message to send');
+                }
+            }
+        </script>
+    </div>
+</body>
+
+</html>
